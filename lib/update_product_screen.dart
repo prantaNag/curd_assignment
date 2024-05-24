@@ -13,7 +13,7 @@ class _UpdateProductState extends State<UpdateProduct> {
   final TextEditingController _quantityTEController = TextEditingController();
   final TextEditingController _totalPriceTEController = TextEditingController();
   final TextEditingController _imageTEController = TextEditingController();
-  final GlobalKey<FromState> _fromkey = GlobalKey<FromState>();
+  final GlobalKey<FormState> _fromkey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {

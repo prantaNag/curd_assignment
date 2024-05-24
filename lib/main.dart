@@ -12,6 +12,7 @@ class CrudApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: _lightThemeData(),
       darkTheme: _darkThemeData(),
       themeMode: ThemeMode.system,
@@ -20,7 +21,7 @@ class CrudApp extends StatelessWidget {
   }
 
   ThemeData _lightThemeData() {
-    ThemeData(
+    return ThemeData(
       inputDecorationTheme: const InputDecorationTheme(
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Colors.purpleAccent),
@@ -50,7 +51,7 @@ class CrudApp extends StatelessWidget {
   }
 
   ThemeData _darkThemeData() {
-    ThemeData(
+    return ThemeData(
       inputDecorationTheme: const InputDecorationTheme(
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Colors.purpleAccent),
