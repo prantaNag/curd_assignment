@@ -1,7 +1,9 @@
+import 'package:cardapp/product.dart';
 import 'package:flutter/material.dart';
 
 class UpdateProduct extends StatefulWidget {
-  const UpdateProduct({super.key});
+  const UpdateProduct({super.key, required this.product});
+  final Product product;
 
   @override
   State<UpdateProduct> createState() => _UpdateProductState();
@@ -13,7 +15,20 @@ class _UpdateProductState extends State<UpdateProduct> {
   final TextEditingController _quantityTEController = TextEditingController();
   final TextEditingController _totalPriceTEController = TextEditingController();
   final TextEditingController _imageTEController = TextEditingController();
+  final TextEditingController _productCodeTEController =
+      TextEditingController();
   final GlobalKey<FormState> _fromkey = GlobalKey<FormState>();
+
+  @override
+  void inState() {
+    super.initState();
+    _nameTEController.text = widget.product.productName;
+    _unitPriceTEController.text = widget.product.unitPrice;
+    _quantityTEController.text = widget.product.quantity;
+    _totalPriceTEController.text = widget.product.totalPrice;
+    _imageTEController.text = widget.product.image;
+    _productCodeTEController.text = widget.product.productCode;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +66,21 @@ class _UpdateProductState extends State<UpdateProduct> {
                     validator: (String? value) {
                       if (value == null || value.trim().isEmpty) {
                         return "Input unit price";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _productCodeTEController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: "Product Code",
+                      labelText: "Product Code",
+                    ),
+                    validator: (String? value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Input Product Code";
                       }
                       return null;
                     },

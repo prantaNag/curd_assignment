@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cardapp/update_product_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 
@@ -21,6 +22,7 @@ class _AddProductState extends State<AddProduct> {
   final GlobalKey<FormState> _fromkey = GlobalKey<FormState>();
 
   bool _addNewProductInPrograss = false;
+  bool _updateProductInPrograss = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +51,7 @@ class _AddProductState extends State<AddProduct> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _unitPriceTEController,
+                    controller: _productCodeTEController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: "Unit Price",
@@ -127,13 +129,20 @@ class _AddProductState extends State<AddProduct> {
                     replacement: const Center(
                       child: CircularProgressIndicator(),
                     ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_fromkey.currentState!.validate()) {
-                          _addProduct();
-                        }
-                      },
-                      child: Text("Add"),
+                    child: Visibility(
+                      visible: _updateProductInPrograss == false,
+                      replacement: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_fromkey.currentState!.validate()) {
+                            _updateProduct();
+                            _addProduct();
+                          }
+                        },
+                        child: Text("Add"),
+                      ),
                     ),
                   ),
                 ],
@@ -163,14 +172,11 @@ class _AddProductState extends State<AddProduct> {
     Response response = await post(
       uri,
       body: jsonEncode(inputData),
-      headers: {'contant-type': 'application/Json'},
+      headers: {'contant-type': 'application/json'},
     );
     print(response.statusCode);
     print(response.body);
     print(response.headers);
-
-    _addNewProductInPrograss = false;
-    setState(() {});
 
     if (response.statusCode == 200) {
       _imageTEController.clear();
@@ -189,6 +195,44 @@ class _AddProductState extends State<AddProduct> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Add New Product Failed.Try Again!"),
+        ),
+      );
+    }
+    _addNewProductInPrograss = false;
+    setState(() {});
+  }
+
+  Future<void> _updateProduct() async {
+    _updateProductInPrograss = true;
+    setState(() {});
+    Map<String, String> inputData = {
+      "ProductName": _nameTEController.text,
+      "ProductCode": _productCodeTEController.text,
+      "Img": _imageTEController.text.trim(),
+      "UnitPrice": _unitPriceTEController.text,
+      "Qty": _quantityTEController.text,
+      "TotalPrice": _totalPriceTEController.text,
+    };
+
+    String updateProductUrl =
+        'https://crud.teamrabbil.com/api/v1/UpdateProduct/${widget.product.id}';
+    Uri uri = Uri.parse(updateProductUrl);
+    Response response = await post(
+      uri,
+      headers: {'content-type': 'application/json'},
+      body: jsonEncode(inputData),
+    );
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Product Update"),
+        ),
+      );
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Update Product failed"),
         ),
       );
     }

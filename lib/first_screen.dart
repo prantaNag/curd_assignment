@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cardapp/product.dart';
 import 'package:cardapp/add_product.dart';
+import 'package:cardapp/product_model.dart';
 import 'package:cardapp/update_product_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -14,7 +15,7 @@ class MyCrud extends StatefulWidget {
 
 class _MyCrudState extends State<MyCrud> {
   bool _getProductListInPrograss = false;
-  List<Product> productList = [];
+  List<ProductModel> productList = [];
   void initState() {
     super.initState();
     _getProductList();
@@ -26,17 +27,20 @@ class _MyCrudState extends State<MyCrud> {
       appBar: AppBar(
         title: Text("Product List"),
       ),
-      body: Visibility(
-        visible: _getProductListInPrograss == false,
-        replacement: const Center(
-          child: CircularProgressIndicator(),
-        ),
-        child: ListView.separated(
-          itemCount: productList.length,
-          itemBuilder: (context, index) {
-            return _buildProduct(productList[index]);
-          },
-          separatorBuilder: (_, __) => const Divider(),
+      body: RefreshIndicator(
+        onRefresh: _getProductList,
+        child: Visibility(
+          visible: _getProductListInPrograss == false,
+          replacement: const Center(
+            child: CircularProgressIndicator(),
+          ),
+          child: ListView.separated(
+            itemCount: productList.length,
+            itemBuilder: (context, index) {
+              return _buildProduct(productList[index]);
+            },
+            separatorBuilder: (_, __) => const Divider(),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -67,17 +71,9 @@ class _MyCrudState extends State<MyCrud> {
     if (response.statusCode == 200) {
       final decodeData = jsonDecode(response.body);
       final jsonproductList = decodeData['data'];
-      for (Map<String, dynamic> p in jsonproductList) {
-        Product product = Product(
-          id: p['_id'] ?? ' ',
-          image: p['Img'] ?? ' ',
-          productCode: p['ProductCode'] ?? ' ',
-          productName: p['ProductName'] ?? ' ',
-          quantity: p['Qty'] ?? '',
-          totalPrice: p['TotalPrice'] ?? ' ',
-          unitPrice: p['UnitPrice'] ?? ' ',
-        );
-        productList.add(product);
+      for (Map<String, dynamic> json in jsonproductList) {
+        ProductModel productModel = ProductModel.fromJson(json);
+        productList.add(productModel);
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,11 +86,11 @@ class _MyCrudState extends State<MyCrud> {
     setState(() {});
   }
 
-  Widget _buildProduct(Product product) {
+  Widget _buildProduct(ProductModel product) {
     return ListTile(
       leading: Image.network(
           "https://images.pexels.com/photos/19090/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=600"),
-      title: Text(product.productName),
+      title: Text(product.productName ?? ''),
       subtitle: Wrap(
         children: [
           SizedBox(width: 5),
@@ -108,19 +104,24 @@ class _MyCrudState extends State<MyCrud> {
       trailing: Wrap(
         children: [
           IconButton(
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const UpdateProduct(),
+                  builder: (context) => UpdateProduct(
+                    product: product,
+                  ),
                 ),
               );
+              if (result == true) {
+                _getProductList();
+              }
             },
             icon: Icon(Icons.edit),
           ),
           IconButton(
             onPressed: () {
-              _showDeleteConfarmation();
+              _showDeleteConfarmation(product.id!);
             },
             icon: Icon(Icons.delete_forever_outlined),
           ),
@@ -129,7 +130,7 @@ class _MyCrudState extends State<MyCrud> {
     );
   }
 
-  void _showDeleteConfarmation() {
+  void _showDeleteConfarmation(String id) {
     showDialog(
       context: context,
       builder: (context) {
@@ -139,6 +140,7 @@ class _MyCrudState extends State<MyCrud> {
           actions: [
             TextButton(
               onPressed: () {
+                _deleteProduct(id);
                 Navigator.pop(context);
               },
               child: Text("Yes"),
@@ -153,5 +155,27 @@ class _MyCrudState extends State<MyCrud> {
         );
       },
     );
+  }
+
+  Future<void> _deleteProduct(String id) async {
+    _getProductListInPrograss = true;
+
+    setState(() {});
+
+    String _deleteProductUrl =
+        'https://crud.teamrabbil.com/api/v1/DeleteProduct/$id';
+    Uri uri = Uri.parse(_deleteProductUrl);
+    Response response = await get(uri);
+    if (response.statusCode == 200) {
+      _getProductList();
+    } else {
+      _getProductListInPrograss = false;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Delete Product Failed.Try Again!"),
+        ),
+      );
+    }
   }
 }
